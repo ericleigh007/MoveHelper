@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <AssemblyName>MoveHelper</AssemblyName>
+    <RootNamespace>MoveHelper</RootNamespace>
+    <Version>0.1.0</Version>
+    <Description>Hover handle for moving and resizing Windows.</Description>
+    <Product>MoveHelper</Product>
+  </PropertyGroup>
+</Project>

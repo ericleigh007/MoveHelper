@@ -10,10 +10,18 @@ internal static class NativeMethods
     public const int DwmwaCloaked = 14;
     public const int GaRoot = 2;
     public const int WmNcLButtonDown = 0x00A1;
+    public const int GwHwndPrev = 3;
+    public const int GwlExStyle = -20;
+    public const long WsExTopMost = 0x00000008;
+    public const uint SwpNoMove = 0x0002;
+    public const uint SwpNoSize = 0x0001;
+    public const uint SwpNoZOrder = 0x0004;
     public const uint SwpNoActivate = 0x0010;
     public const uint SwpShowWindow = 0x0040;
 
+    public static readonly IntPtr HwndTop = IntPtr.Zero;
     public static readonly IntPtr HwndTopMost = new(-1);
+    public static readonly IntPtr HwndNotTopMost = new(-2);
 
     [StructLayout(LayoutKind.Sequential)]
     public struct Point
@@ -43,6 +51,12 @@ internal static class NativeMethods
 
     [DllImport("user32.dll")]
     public static extern IntPtr GetAncestor(IntPtr hwnd, int flags);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetWindow(IntPtr hwnd, int command);
+
+    [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
+    public static extern nint GetWindowLongPtr(IntPtr hwnd, int index);
 
     [DllImport("user32.dll")]
     public static extern bool GetWindowRect(IntPtr hwnd, out Rect rect);

@@ -16,7 +16,7 @@ internal sealed class GripOverlay : Form
         FormBorderStyle = FormBorderStyle.None;
         ShowInTaskbar = false;
         StartPosition = FormStartPosition.Manual;
-        TopMost = true;
+        TopMost = false;
         AllowTransparency = true;
         Opacity = 0.92;
         BackColor = Color.FromArgb(24, 24, 24);
@@ -54,33 +54,66 @@ internal sealed class GripOverlay : Form
             CreateHandle();
         }
 
-        if (_shown != grip.Bounds)
+        bool moved = _shown != grip.Bounds || !Visible;
+        _shown = grip.Bounds;
+        PlaceWithTarget(target, grip.Bounds);
+        if (moved)
         {
-            _shown = grip.Bounds;
-            _ = NativeMethods.SetWindowPos(
-                Handle,
-                NativeMethods.HwndTopMost,
-                grip.Bounds.X,
-                grip.Bounds.Y,
-                grip.Bounds.Width,
-                grip.Bounds.Height,
-                NativeMethods.SwpNoActivate | NativeMethods.SwpShowWindow);
             UpdateRegion();
+            Invalidate();
         }
-        else if (!Visible)
+    }
+
+    /// <summary>
+    /// Puts the handle immediately above its window and in the same Z band.
+    /// A topmost handle would paint over windows that are in front of the target.
+    /// </summary>
+    private void PlaceWithTarget(IntPtr target, Rectangle bounds)
+    {
+        bool targetTopMost = IsTopMost(target);
+        if (IsTopMost(Handle) && !targetTopMost)
         {
             _ = NativeMethods.SetWindowPos(
                 Handle,
-                NativeMethods.HwndTopMost,
-                grip.Bounds.X,
-                grip.Bounds.Y,
-                grip.Bounds.Width,
-                grip.Bounds.Height,
-                NativeMethods.SwpNoActivate | NativeMethods.SwpShowWindow);
+                NativeMethods.HwndNotTopMost,
+                0,
+                0,
+                0,
+                0,
+                NativeMethods.SwpNoMove | NativeMethods.SwpNoSize | NativeMethods.SwpNoActivate);
         }
 
-        Invalidate();
+        uint flags = NativeMethods.SwpNoActivate | NativeMethods.SwpShowWindow;
+        IntPtr insertAfter = InsertAfter(target, targetTopMost, ref flags);
+        _ = NativeMethods.SetWindowPos(Handle, insertAfter, bounds.X, bounds.Y, bounds.Width, bounds.Height, flags);
     }
+
+    private IntPtr InsertAfter(IntPtr target, bool targetTopMost, ref uint flags)
+    {
+        IntPtr above = NativeMethods.GetWindow(target, NativeMethods.GwHwndPrev);
+        if (above == Handle)
+        {
+            flags |= NativeMethods.SwpNoZOrder;
+            return IntPtr.Zero;
+        }
+
+        if (above == IntPtr.Zero)
+        {
+            return targetTopMost ? NativeMethods.HwndTopMost : NativeMethods.HwndTop;
+        }
+
+        // The window above a normal window can be topmost. Inserting after that
+        // window would promote the handle into the topmost band.
+        if (!targetTopMost && IsTopMost(above))
+        {
+            return NativeMethods.HwndTop;
+        }
+
+        return above;
+    }
+
+    private static bool IsTopMost(IntPtr hwnd) =>
+        (NativeMethods.GetWindowLongPtr(hwnd, NativeMethods.GwlExStyle) & NativeMethods.WsExTopMost) != 0;
 
     public void HideGrip()
     {
